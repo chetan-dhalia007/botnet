@@ -1,0 +1,16 @@
+{
+  "name": "client",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build:windows": "bun build --compile --target=bun-windows-x64 ./index.ts --outfile bot-windows.exe",
+    "build:linux": "bun build --compile --target=bun-linux-x64 ./index.ts --outfile bot-linux"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
